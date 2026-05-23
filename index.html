@@ -359,6 +359,38 @@
             document.getElementById('local-video').srcObject = null;
             document.getElementById('video-wrap').style.opacity = '1';
         }
-    </script>
+    </script><div id="login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:#1a1a1a; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
+    <h2 id="title">Добро пожаловать в ZOZO</h2>
+    <input type="password" id="pass" placeholder="Пароль" style="padding:12px; margin:10px; border-radius:8px; border:none; width:250px;">
+    <button onclick="handleAuth()" style="padding:12px 30px; background-color:#ff0055; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Войти / Зарегистрироваться</button>
+</div>
+
+<script>
+    const title = document.getElementById('title');
+    if (localStorage.getItem('userPassword')) {
+        title.innerText = "Введите ваш пароль";
+    } else {
+        title.innerText = "Придумайте пароль для входа";
+    }
+
+    function handleAuth() {
+        const inputPass = document.getElementById('pass').value;
+        const savedPass = localStorage.getItem('userPassword');
+
+        if (!inputPass) { alert("Введите пароль!"); return; }
+
+        if (!savedPass) {
+            localStorage.setItem('userPassword', inputPass);
+            document.getElementById('login-overlay').style.display = 'none';
+        } else {
+            if (inputPass === savedPass) {
+                document.getElementById('login-overlay').style.display = 'none';
+            } else {
+                alert("Неверный пароль!");
+            }
+        }
+    }
+</script>
+
 </body>
 </html>
