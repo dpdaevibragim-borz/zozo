@@ -13,13 +13,14 @@
             --accent-pink: #ff007f;
             --text-main: #ffffff;
             --text-muted: #6b7c96;
+            --chat-bg: #0e1424;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
         /* Экран авторизации */
-        #auth-screen { position: fixed; inset: 0; background: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
+        #auth-screen { position: fixed; inset: 0; background: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .logo { font-size: 48px; font-weight: bold; background: linear-gradient(45deg, var(--accent-pink), var(--accent-neon)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; letter-spacing: 2px; }
         .subtitle { color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 40px; }
         .auth-card { background: var(--card-bg); border-radius: 20px; padding: 30px; width: 100%; max-width: 360px; border: 1px solid #1e293b; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -27,34 +28,58 @@
         input { background: #1e293b; color: white; border: 1px solid #334155; }
         input:focus { border-color: var(--accent-neon); }
         button { background: white; color: black; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button.neon-btn { background: transparent; color: var(--accent-neon); border: 2px solid var(--accent-neon); box-shadow: 0 0 10px rgba(0,255,204,0.2); }
         button:active { transform: scale(0.98); }
 
-        /* Главный экран мессенджера */
-        header { background: var(--card-bg); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; }
-        .user-info h4 { font-size: 16px; }
-        .user-info p { font-size: 12px; color: var(--accent-neon); }
+        /* Основная разметка (Экран контактов и Экран чата) */
+        .app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
+        
+        /* Панель контактов */
+        .contacts-panel { width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; border-right: 1px solid #1e293b; z-index: 10; transition: 0.3s; }
+        .panel-header { background: var(--card-bg); padding: 20px 15px; border-bottom: 1px solid #1e293b; }
+        .panel-header h2 { font-size: 22px; margin-bottom: 10px; }
+        .search-box { background: #1e293b; padding: 10px 15px; border-radius: 10px; color: white; font-size: 14px; border: none; width: 100%; }
+        
+        .contacts-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .contact-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #131a2c; cursor: pointer; transition: 0.2s; }
+        .contact-item:active { background: #1e293b; }
+        .contact-avatar { width: 50px; height: 50px; border-radius: 50%; background: #24324d; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: var(--accent-neon); margin-right: 15px; border: 1px solid #2d3d5a; object-fit: cover; }
+        .contact-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .contact-name-row { display: flex; justify-content: space-between; align-items: center; }
+        .contact-name { font-weight: 600; font-size: 16px; color: var(--text-main); }
+        .contact-time { font-size: 12px; color: var(--text-muted); }
+        .contact-lastmsg { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .contact-lastmsg.unread { color: var(--accent-neon); }
+
+        /* Окно активного чата */
+        .chat-panel { position: absolute; inset: 0; background: var(--chat-bg); display: flex; flex-direction: column; z-index: 5; transform: translateX(100%); transition: transform 0.3s ease; }
+        .chat-panel.active { transform: translateX(0); z-index: 20; }
+        
+        chat-header { background: var(--card-bg); padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; }
+        .back-btn { background: transparent; color: var(--accent-neon); width: auto; margin-bottom: 0; padding: 5px 10px; font-size: 18px; }
+        .chat-user-info { display: flex; align-items: center; gap: 10px; flex: 1; margin-left: 10px; }
+        .chat-user-info h4 { font-size: 16px; }
+        .chat-user-info p { font-size: 11px; color: var(--accent-neon); }
         
         .chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: radial-gradient(circle at top, #141b2d 0%, #0b0f19 100%); }
         
         /* Сообщения */
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; display: flex; flex-direction: column; animation: fadeIn 0.3s ease; word-break: break-word; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; display: flex; flex-direction: column; animation: fadeIn 0.2s ease; word-break: break-word; }
         .msg.incoming { background: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; }
         .msg.outgoing { background: linear-gradient(135deg, #006652 0%, #004d3d 100%); align-self: flex-end; border-bottom-right-radius: 4px; border: 1px solid rgba(0,255,204,0.2); }
         .msg img, .msg video { max-width: 100%; border-radius: 10px; margin-top: 5px; max-height: 250px; object-fit: cover; }
         .msg-time { font-size: 10px; color: var(--text-muted); align-self: flex-end; margin-top: 5px; }
 
-        /* Панель ввода */
-        .input-panel { padding: 15px; background: var(--card-bg); display: flex; align-items: center; gap: 10px; border-top: 1px solid #1e293b; }
+        /* Ввод сообщений */
+        .input-panel { padding: 12px; background: var(--card-bg); display: flex; align-items: center; gap: 10px; border-top: 1px solid #1e293b; }
         .input-panel input { margin-bottom: 0; }
-        .attach-btn { background: #1e293b; color: white; width: 50px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .send-btn { background: var(--accent-neon); color: black; width: 80px; font-weight: bold; margin-bottom: 0; }
+        .attach-btn { background: #1e293b; color: white; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 22px; border-radius: 50%; }
+        .send-btn { background: var(--accent-neon); color: black; width: 70px; font-weight: bold; margin-bottom: 0; height: 45px; border-radius: 12px; }
 
-        /* Окно звонка */
-        #call-screen { position: fixed; inset: 0; background: rgba(11,15,25,0.98); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .video-container { position: relative; width: 100%; max-width: 400px; height: 60vh; background: #000; border-radius: 24px; overflow: hidden; border: 2px solid var(--accent-pink); }
+        /* Экран звонка */
+        #call-screen { position: fixed; inset: 0; background: rgba(11,15,25,0.98); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .video-container { position: relative; width: 100%; max-width: 400px; height: 55vh; background: #000; border-radius: 24px; overflow: hidden; border: 2px solid var(--accent-pink); }
         #remote-video { width: 100%; height: 100%; object-fit: cover; }
-        #local-video { position: absolute; top: 15px; right: 15px; width: 100px; height: 140px; background: #222; border-radius: 12px; object-fit: cover; border: 1px solid white; }
+        #local-video { position: absolute; top: 15px; right: 15px; width: 90px; height: 130px; background: #222; border-radius: 12px; object-fit: cover; border: 1px solid white; }
         .call-status { margin: 20px 0; font-size: 18px; color: var(--accent-neon); text-align: center; }
         .call-controls { display: flex; gap: 20px; }
         .btn-call { border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0; }
@@ -69,57 +94,60 @@
 
     <div id="auth-screen">
         <div class="logo">ZOZO</div>
-        <div class="subtitle">Mobile Node Platform</div>
-        
+        <div class="subtitle">WhatsApp Edition</div>
         <div class="auth-card">
-            <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted);">Шаг 1: Придумай и скопируй свой личный ID</p>
-            <input type="text" id="my-id-input" placeholder="Твой личный ID (например: ibrahim77)">
-            <button onclick="initUser()">Создать мой аккаунт</button>
-            
-            <hr style="border-color: #1e293b; margin: 20px 0;">
-            
-            <div id="connect-section" class="hidden">
-                <p style="margin-bottom: 15px; font-size: 14px; color: var(--accent-neon);">Шаг 2: Введи ID собеседника для связи</p>
-                <input type="text" id="peer-id-input" placeholder="ID друга, кому хочешь писать">
-                <button class="neon-btn" onclick="connectToPeer()">Открыть чат</button>
+            <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted);">Придумай свой постоянный ID для входа:</p>
+            <input type="text" id="my-id-input" placeholder="Например: ibrahim77">
+            <button onclick="initUser()">Войти в систему</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <div class="contacts-panel">
+            <div class="panel-header">
+                <h2>ZOZO</h2>
+                <input type="text" class="search-box" placeholder="Поиск или ввод Node ID...">
+            </div>
+            <div class="contacts-list" id="contacts-list">
+                </div>
+        </div>
+
+        <div class="chat-panel" id="chat-panel">
+            <chat-header>
+                <button class="back-btn" onclick="closeChat()">←</button>
+                <div class="chat-user-info">
+                    <div class="contact-avatar" id="active-chat-avatar" style="width:38px; height:38px; margin-right:0; font-size:14px;">?</div>
+                    <div>
+                        <h4 id="chat-with-title">Чат</h4>
+                        <p id="chat-status-sub">Node соединение</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button style="padding: 6px 10px; background: #1e293b; color: var(--accent-neon); font-size: 13px; margin: 0; width: auto; border-radius: 8px;" onclick="startCall(false)">📞</button>
+                    <button style="padding: 6px 10px; background: var(--accent-neon); color: black; font-size: 13px; margin: 0; width: auto; border-radius: 8px;" onclick="startCall(true)">📹</button>
+                </div>
+            </chat-header>
+
+            <div class="chat-area" id="chat-area"></div>
+
+            <div class="input-panel">
+                <input type="file" id="media-input" accept="image/*,video/*" class="hidden" onchange="handleMediaUpload(this)">
+                <button class="attach-btn" onclick="document.getElementById('media-input').click()">+</button>
+                <input type="text" id="msg-input" placeholder="Сообщение...">
+                <button class="send-btn" onclick="sendTextMessage()">ООТП</button>
             </div>
         </div>
-    </div>
 
-    <header>
-        <div class="user-info">
-            <h4 id="chat-with-title">Чат не выбран</h4>
-            <p id="my-id-display">Мой ID: ...</p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <button style="padding: 8px 12px; background: #1e293b; color: var(--accent-neon); font-size: 14px; margin: 0; width: auto; border-radius: 8px;" onclick="startCall(false)">📞 Аудио</button>
-            <button style="padding: 8px 12px; background: var(--accent-neon); color: black; font-size: 14px; margin: 0; width: auto; border-radius: 8px;" onclick="startCall(true)">📹 Видео</button>
-        </div>
-    </header>
-
-    <div class="chat-area" id="chat-area">
-        <div class="msg incoming" style="align-self: center; background: transparent; color: var(--text-muted); font-size: 13px; text-align: center;">
-            Инструкция: Чтобы общаться, твой друг тоже должен открыть этот сайт, зарегистрировать свой ID и вы должны ввести ID друг друга.
-        </div>
-    </div>
-
-    <div class="input-panel">
-        <input type="file" id="media-input" accept="image/*,video/*" class="hidden" onchange="handleMediaUpload(this)">
-        <button class="attach-btn" onclick="document.getElementById('media-input').click()">+</button>
-        
-        <input type="text" id="msg-input" placeholder="Сообщение...">
-        <button class="send-btn" onclick="sendTextMessage()">ООТП</button>
     </div>
 
     <div id="call-screen" class="hidden">
-        <div class="logo" style="font-size: 28px;">ZOZO CALL</div>
+        <div class="logo" style="font-size: 24px;">ZOZO CALL</div>
         <div class="call-status" id="call-status">Входящий вызов...</div>
-        
         <div class="video-container" id="video-wrap">
             <video id="remote-video" autoplay playsinline></video>
             <video id="local-video" autoplay playsinline muted></video>
         </div>
-        
         <div class="call-controls">
             <button class="btn-call btn-answer id-btn-ans" onclick="answerIncomingCall()">📞</button>
             <button class="btn-call btn-hangup" onclick="hangUpCall()">❌</button>
@@ -127,6 +155,16 @@
     </div>
 
     <script>
+        // Данные контактов по образу твоего WhatsApp
+        const initialContacts = [
+            { id: 'vezhri', name: 'Вежри', lastMsg: '🌌 Скоро Я презентую проект', time: '11:42', avatar: 'В' },
+            { id: 'phone2', name: '+7 929 887-66-21', lastMsg: '🌌 18 фото', time: '11:32', avatar: '#' },
+            { id: 'isa', name: '1иса Ваш', lastMsg: '📹 Видеозапись', time: '02:50', avatar: '1И' },
+            { id: 'kho', name: 'Кхо ваш', lastMsg: '📹 Вы: Видеозапись', time: '02:50', avatar: 'КВ' },
+            { id: 'islam', name: 'Ислам Брат', lastMsg: 'Все?', time: 'Вчера', avatar: 'ИБ' },
+            { id: 'family', name: 'Семья', lastMsg: 'Ислам Брат: 🌌 Фото', time: 'Вчера', avatar: 'С' }
+        ];
+
         let peer = null;
         let conn = null;
         let currentCall = null;
@@ -134,67 +172,84 @@
         let myId = "";
         let targetPeerId = "";
 
-        // Инициализация пользователя
+        // Рендеринг контактов на экран
+        function renderContacts() {
+            const listContainer = document.getElementById('contacts-list');
+            listContainer.innerHTML = '';
+            
+            initialContacts.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'contact-item';
+                item.onclick = () => openChatWith(c.id, c.name, c.avatar);
+                
+                item.innerHTML = `
+                    <div class="contact-avatar">${c.avatar}</div>
+                    <div class="contact-info">
+                        <div class="contact-name-row">
+                            <div class="contact-name">${c.name}</div>
+                            <div class="contact-time">${c.time}</div>
+                        </div>
+                        <div class="contact-lastmsg">${c.lastMsg}</div>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
         function initUser() {
             const input = document.getElementById('my-id-input').value.trim();
             if (!input) return alert('Введите корректный ID');
             myId = input;
 
-            // Создаем P2P узел на бесплатных серверах PeerJS
             peer = new Peer(myId);
 
             peer.on('open', (id) => {
-                document.getElementById('my-id-display').innerText = "Мой ID: " + id;
-                document.getElementById('connect-section').classList.remove('hidden');
-                alert('Аккаунт создан! Твой ID зарегистрирован в сети.');
+                document.getElementById('auth-screen').classList.add('hidden');
+                renderContacts();
             });
 
             peer.on('error', (err) => {
-                console.error(err);
-                alert('Произошла ошибка или этот ID уже занят кем-то другим.');
+                alert('Ошибка сети или этот ID уже занят. Попробуйте другой.');
             });
 
-            // Слушаем входящие текстовые сообщения
             peer.on('connection', (connection) => {
                 conn = connection;
-                setupChatLogic();
+                conn.on('data', (data) => {
+                    appendMessage(data.text, 'incoming', data.type, data.mediaData);
+                    updateLastMessage(conn.peer, data.text);
+                });
             });
 
-            // Слушаем входящие звонки
             peer.on('call', (call) => {
                 currentCall = call;
                 document.getElementById('call-screen').classList.remove('hidden');
-                document.getElementById('call-status').innerText = "Входящий вызов от " + call.peer;
+                document.getElementById('call-status').innerText = "Входящий вызов...";
                 document.querySelector('.id-btn-ans').classList.remove('hidden');
             });
         }
 
-        // Подключение к другу
-        function connectToPeer() {
-            targetPeerId = document.getElementById('peer-id-input').value.trim();
-            if (!targetPeerId) return alert('Введите ID друга');
+        function openChatWith(id, name, avatar) {
+            targetPeerId = id;
+            document.getElementById('chat-with-title').innerText = name;
+            document.getElementById('active-chat-avatar').innerText = avatar;
+            document.getElementById('chat-area').innerHTML = '';
+            document.getElementById('chat-panel').classList.add('active');
 
-            document.getElementById('chat-with-title').innerText = "Чат с: " + targetPeerId;
-            document.getElementById('auth-screen').classList.add('hidden');
-
+            // Подключаемся по P2P сети к выбранному ID
             conn = peer.connect(targetPeerId);
-            setupChatLogic();
-        }
-
-        // Настройка логики входящих/исходящих данных в чате
-        function setupChatLogic() {
-            document.getElementById('auth-screen').classList.add('hidden');
-            if (conn) {
-                document.getElementById('chat-with-title').innerText = "Чат с: " + conn.peer;
-                targetPeerId = conn.peer;
-            }
-
+            conn.on('open', () => {
+                document.getElementById('chat-status-sub').innerText = "В сети (Защищено P2P)";
+            });
             conn.on('data', (data) => {
                 appendMessage(data.text, 'incoming', data.type, data.mediaData);
+                updateLastMessage(targetPeerId, data.text);
             });
         }
 
-        // Функция отправки текста
+        function closeChat() {
+            document.getElementById('chat-panel').classList.remove('active');
+        }
+
         function sendTextMessage() {
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
@@ -203,10 +258,10 @@
             const msgData = { type: 'text', text: text };
             conn.send(msgData);
             appendMessage(text, 'outgoing', 'text');
+            updateLastMessage(targetPeerId, "Вы: " + text);
             input.value = '';
         }
 
-        // Обработка отправки фото/видео из галереи
         function handleMediaUpload(inputElement) {
             const file = inputElement.files[0];
             if (!file || !conn) return;
@@ -215,22 +270,16 @@
             reader.onload = function(e) {
                 const base64Data = e.target.result;
                 const fileType = file.type.startsWith('video') ? 'video' : 'image';
+                const label = fileType === 'image' ? '🌌 Фотография' : '📹 Видеозапись';
                 
-                const msgData = {
-                    type: fileType,
-                    text: fileType === 'image' ? '🌌 Фотография' : '📹 Видеозапись',
-                    mediaData: base64Data
-                };
-
-                // Отправляем P2P другу
+                const msgData = { type: fileType, text: label, mediaData: base64Data };
                 conn.send(msgData);
-                // Показываем у себя на экране
-                appendMessage(msgData.text, 'outgoing', fileType, base64Data);
+                appendMessage(label, 'outgoing', fileType, base64Data);
+                updateLastMessage(targetPeerId, "Вы: " + label);
             };
             reader.readAsDataURL(file);
         }
 
-        // Отображение сообщений и медиа в чате
         function appendMessage(text, direction, type = 'text', mediaData = null) {
             const chatArea = document.getElementById('chat-area');
             const msgDiv = document.createElement('div');
@@ -239,9 +288,9 @@
             if (type === 'text') {
                 msgDiv.innerText = text;
             } else if (type === 'image') {
-                msgDiv.innerHTML = `<span style="color:var(--accent-neon); font-size:12px;">${text}</span><img src="${mediaData}" onclick="window.open(this.src)">`;
+                msgDiv.innerHTML = `<img src="${mediaData}" onclick="window.open(this.src)">`;
             } else if (type === 'video') {
-                msgDiv.innerHTML = `<span style="color:var(--accent-pink); font-size:12px;">${text}</span><video src="${mediaData}" controls playsinline></video>`;
+                msgDiv.innerHTML = `<video src="${mediaData}" controls playsinline></video>`;
             }
 
             const timeDiv = document.createElement('div');
@@ -254,9 +303,18 @@
             chatArea.scrollTop = chatArea.scrollHeight;
         }
 
-        /* ЛОГИКА ЗВОНКОВ (WebRTC) */
+        function updateLastMessage(id, text) {
+            const contact = initialContacts.find(c => c.id === id);
+            if (contact) {
+                contact.lastMsg = text;
+                const now = new Date();
+                contact.time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                renderContacts();
+            }
+        }
+
+        /* ЗВOНКИ */
         async function startCall(isVideo) {
-            if (!targetPeerId) return alert('Сначала выберите чат и подключитесь к другу');
             document.getElementById('call-screen').classList.remove('hidden');
             document.getElementById('call-status').innerText = "Вызов отправлен...";
             document.querySelector('.id-btn-ans').classList.add('hidden');
@@ -264,12 +322,10 @@
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
                 document.getElementById('local-video').srcObject = localStream;
-                if (!isVideo) document.getElementById('video-wrap').style.opacity = '0.3';
-
+                if (!isVideo) document.getElementById('video-wrap').style.opacity = '0.2';
                 currentCall = peer.call(targetPeerId, localStream);
                 handleCallStreams();
             } catch (err) {
-                alert('Не удалось получить доступ к камере/микрофону: ' + err);
                 hangUpCall();
             }
         }
@@ -277,24 +333,13 @@
         async function answerIncomingCall() {
             document.querySelector('.id-btn-ans').classList.add('hidden');
             document.getElementById('call-status').innerText = "Соединение...";
-
             try {
-                // Пытаемся взять камеру и микрофон для ответа
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 document.getElementById('local-video').srcObject = localStream;
-                
                 currentCall.answer(localStream);
                 handleCallStreams();
             } catch (err) {
-                // Если камеры нет или отклонено, пробуем только аудио
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    currentCall.answer(localStream);
-                    handleCallStreams();
-                } catch (e) {
-                    alert('Ошибка доступа к аудио/видео.');
-                    hangUpCall();
-                }
+                hangUpCall();
             }
         }
 
@@ -303,22 +348,16 @@
                 document.getElementById('call-status').innerText = "Разговор активен";
                 document.getElementById('remote-video').srcObject = remoteStream;
             });
-
-            currentCall.on('close', () => {
-                hangUpCall();
-            });
+            currentCall.on('close', () => hangUpCall());
         }
 
         function hangUpCall() {
             if (currentCall) currentCall.close();
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
             document.getElementById('call-screen').classList.add('hidden');
             document.getElementById('remote-video').srcObject = null;
             document.getElementById('local-video').srcObject = null;
             document.getElementById('video-wrap').style.opacity = '1';
-            document.getElementById('call-status').innerText = "...";
         }
     </script>
 </body>
