@@ -2,21 +2,27 @@
 <html>
 <head>
     <title>ZOZO Messenger</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #auth-screen, #chat-screen { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0084ff; color: white; border: none; border-radius: 10px; cursor: pointer; margin-top: 5px; }
+        #messages { height: 300px; overflow-y: scroll; border: 1px solid #eee; margin-bottom: 10px; padding: 10px; text-align: left; }
+    </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <h3>ZOZO Messenger</h3>
-        <input type="text" id="username" placeholder="Придумай имя (логин)">
-        <input type="password" id="password" placeholder="Придумай пароль">
-        <br><br>
+        <input type="text" id="username" placeholder="Логин">
+        <input type="password" id="password" placeholder="Пароль">
         <button onclick="register()">Регистрация</button>
         <button onclick="login()">Войти</button>
     </div>
 
     <div id="chat-screen" style="display:none;">
-        <h1>Чат ZOZO</h1>
-        <div id="messages" style="height:200px; overflow-y:scroll; border:1px solid #ccc;"></div>
+        <h3>Чат ZOZO</h3>
+        <div id="messages"></div>
         <input type="text" id="msgInput" placeholder="Сообщение...">
         <button onclick="sendMessage()">Отправить</button>
     </div>
@@ -37,24 +43,22 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- ФУНКЦИИ ---
         window.register = async () => {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
             await setDoc(doc(db, "users", user), { password: pass });
-            alert("Регистрация успешна! Теперь нажми Войти.");
+            alert("Успешно! Теперь нажмите Войти.");
         };
 
         window.login = async () => {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
             const docSnap = await getDoc(doc(db, "users", user));
-            
             if (docSnap.exists() && docSnap.data().password === pass) {
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('chat-screen').style.display = 'block';
             } else {
-                alert("Неверный логин или пароль!");
+                alert("Ошибка!");
             }
         };
 
@@ -64,11 +68,11 @@
             document.getElementById('msgInput').value = '';
         };
 
-        // Загрузка сообщений
         onSnapshot(query(collection(db, "messages"), orderBy("createdAt")), (snap) => {
-            document.getElementById('messages').innerHTML = '';
+            const msgList = document.getElementById('messages');
+            msgList.innerHTML = '';
             snap.forEach(d => {
-                document.getElementById('messages').innerHTML += `<div>${d.data().text}</div>`;
+                msgList.innerHTML += `<div>${d.data().text}</div>`;
             });
         });
     </script>
