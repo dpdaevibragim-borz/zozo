@@ -2,173 +2,324 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZOZO App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZOZO Node Messenger</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131a2c;
+            --accent-neon: #00ffcc;
+            --accent-pink: #ff007f;
+            --text-main: #ffffff;
+            --text-muted: #6b7c96;
         }
 
-        body {
-            background-color: #0b0e14;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 100vh;
-            padding: 20px;
-            overflow: hidden;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Экран авторизации */
+        #auth-screen { position: fixed; inset: 0; background: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
+        .logo { font-size: 48px; font-weight: bold; background: linear-gradient(45deg, var(--accent-pink), var(--accent-neon)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; letter-spacing: 2px; }
+        .subtitle { color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 40px; }
+        .auth-card { background: var(--card-bg); border-radius: 20px; padding: 30px; width: 100%; max-width: 360px; border: 1px solid #1e293b; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        input, button { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; margin-bottom: 15px; outline: none; }
+        input { background: #1e293b; color: white; border: 1px solid #334155; }
+        input:focus { border-color: var(--accent-neon); }
+        button { background: white; color: black; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button.neon-btn { background: transparent; color: var(--accent-neon); border: 2px solid var(--accent-neon); box-shadow: 0 0 10px rgba(0,255,204,0.2); }
+        button:active { transform: scale(0.98); }
 
-        .header {
-            text-align: center;
-            margin-top: 40px;
-        }
+        /* Главный экран мессенджера */
+        header { background: var(--card-bg); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; }
+        .user-info h4 { font-size: 16px; }
+        .user-info p { font-size: 12px; color: var(--accent-neon); }
+        
+        .chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: radial-gradient(circle at top, #141b2d 0%, #0b0f19 100%); }
+        
+        /* Сообщения */
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; display: flex; flex-direction: column; animation: fadeIn 0.3s ease; word-break: break-word; }
+        .msg.incoming { background: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg.outgoing { background: linear-gradient(135deg, #006652 0%, #004d3d 100%); align-self: flex-end; border-bottom-right-radius: 4px; border: 1px solid rgba(0,255,204,0.2); }
+        .msg img, .msg video { max-width: 100%; border-radius: 10px; margin-top: 5px; max-height: 250px; object-fit: cover; }
+        .msg-time { font-size: 10px; color: var(--text-muted); align-self: flex-end; margin-top: 5px; }
 
-        .header h1 {
-            font-size: 3.5rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            background: linear-gradient(45deg, #ff0055, #00ffcc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0px 0px 20px rgba(0, 255, 204, 0.2);
-        }
+        /* Панель ввода */
+        .input-panel { padding: 15px; background: var(--card-bg); display: flex; align-items: center; gap: 10px; border-top: 1px solid #1e293b; }
+        .input-panel input { margin-bottom: 0; }
+        .attach-btn { background: #1e293b; color: white; width: 50px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .send-btn { background: var(--accent-neon); color: black; width: 80px; font-weight: bold; margin-bottom: 0; }
 
-        .header p {
-            color: #707e94;
-            font-size: 0.9rem;
-            margin-top: 5px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+        /* Окно звонка */
+        #call-screen { position: fixed; inset: 0; background: rgba(11,15,25,0.98); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .video-container { position: relative; width: 100%; max-width: 400px; height: 60vh; background: #000; border-radius: 24px; overflow: hidden; border: 2px solid var(--accent-pink); }
+        #remote-video { width: 100%; height: 100%; object-fit: cover; }
+        #local-video { position: absolute; top: 15px; right: 15px; width: 100px; height: 140px; background: #222; border-radius: 12px; object-fit: cover; border: 1px solid white; }
+        .call-status { margin: 20px 0; font-size: 18px; color: var(--accent-neon); text-align: center; }
+        .call-controls { display: flex; gap: 20px; }
+        .btn-call { border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0; }
+        .btn-answer { background: #10b981; color: white; }
+        .btn-hangup { background: #ef4444; color: white; }
 
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .status-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 30px;
-            width: 100%;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
-        }
-
-        .pulse-orb {
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, #00ffcc 0%, #00aa88 100%);
-            border-radius: 50%;
-            margin: 0 auto 25px auto;
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.6);
-            animation: pulse 2s infinite alternate;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 20px rgba(0, 255, 204, 0.4); }
-            100% { transform: scale(1.05); box-shadow: 0 0 40px rgba(0, 255, 204, 0.8); }
-        }
-
-        .status-text {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .sub-text {
-            color: #00ffcc;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .action-btn {
-            background: #ffffff;
-            color: #0b0e14;
-            border: none;
-            border-radius: 18px;
-            padding: 18px 0;
-            width: 100%;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 10px 25px rgba(255,255,255,0.1);
-        }
-
-        .action-btn:active {
-            transform: scale(0.97);
-            background: #e0e0e0;
-        }
-
-        .footer {
-            color: #384357;
-            font-size: 0.8rem;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-        }
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>ZOZO</h1>
-        <p>Mobile Node Platform</p>
-    </div>
-
-    <div class="main-container">
-        <div class="status-card">
-            <div class="pulse-orb" id="orb"></div>
-            <div class="status-text" id="status-title">Система активна</div>
-            <div class="sub-text" id="status-desc">Все модули работают стабильно</div>
+    <div id="auth-screen">
+        <div class="logo">ZOZO</div>
+        <div class="subtitle">Mobile Node Platform</div>
+        
+        <div class="auth-card">
+            <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted);">Шаг 1: Придумай и скопируй свой личный ID</p>
+            <input type="text" id="my-id-input" placeholder="Твой личный ID (например: ibrahim77)">
+            <button onclick="initUser()">Создать мой аккаунт</button>
+            
+            <hr style="border-color: #1e293b; margin: 20px 0;">
+            
+            <div id="connect-section" class="hidden">
+                <p style="margin-bottom: 15px; font-size: 14px; color: var(--accent-neon);">Шаг 2: Введи ID собеседника для связи</p>
+                <input type="text" id="peer-id-input" placeholder="ID друга, кому хочешь писать">
+                <button class="neon-btn" onclick="connectToPeer()">Открыть чат</button>
+            </div>
         </div>
-
-        <button class="action-btn" onclick="toggleStatus()">Управление</button>
     </div>
 
-    <div class="footer">
-        © 2026 ZOZO Inc. v1.0.0
+    <header>
+        <div class="user-info">
+            <h4 id="chat-with-title">Чат не выбран</h4>
+            <p id="my-id-display">Мой ID: ...</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button style="padding: 8px 12px; background: #1e293b; color: var(--accent-neon); font-size: 14px; margin: 0; width: auto; border-radius: 8px;" onclick="startCall(false)">📞 Аудио</button>
+            <button style="padding: 8px 12px; background: var(--accent-neon); color: black; font-size: 14px; margin: 0; width: auto; border-radius: 8px;" onclick="startCall(true)">📹 Видео</button>
+        </div>
+    </header>
+
+    <div class="chat-area" id="chat-area">
+        <div class="msg incoming" style="align-self: center; background: transparent; color: var(--text-muted); font-size: 13px; text-align: center;">
+            Инструкция: Чтобы общаться, твой друг тоже должен открыть этот сайт, зарегистрировать свой ID и вы должны ввести ID друг друга.
+        </div>
+    </div>
+
+    <div class="input-panel">
+        <input type="file" id="media-input" accept="image/*,video/*" class="hidden" onchange="handleMediaUpload(this)">
+        <button class="attach-btn" onclick="document.getElementById('media-input').click()">+</button>
+        
+        <input type="text" id="msg-input" placeholder="Сообщение...">
+        <button class="send-btn" onclick="sendTextMessage()">ООТП</button>
+    </div>
+
+    <div id="call-screen" class="hidden">
+        <div class="logo" style="font-size: 28px;">ZOZO CALL</div>
+        <div class="call-status" id="call-status">Входящий вызов...</div>
+        
+        <div class="video-container" id="video-wrap">
+            <video id="remote-video" autoplay playsinline></video>
+            <video id="local-video" autoplay playsinline muted></video>
+        </div>
+        
+        <div class="call-controls">
+            <button class="btn-call btn-answer id-btn-ans" onclick="answerIncomingCall()">📞</button>
+            <button class="btn-call btn-hangup" onclick="hangUpCall()">❌</button>
+        </div>
     </div>
 
     <script>
-        let isActive = true;
-        
-        function toggleStatus() {
-            const orb = document.getElementById('orb');
-            const title = document.getElementById('status-title');
-            const desc = document.getElementById('status-desc');
-            
-            if(isActive) {
-                orb.style.background = "radial-gradient(circle, #ff0055 0%, #aa0033 100%)";
-                orb.style.boxShadow = "0 0 30px rgba(255, 0, 85, 0.6)";
-                title.innerText = "Система приостановлена";
-                desc.innerText = "Ожидание команды на запуск";
-                desc.style.color = "#ff0055";
-                isActive = false;
-            } else {
-                orb.style.background = "radial-gradient(circle, #00ffcc 0%, #00aa88 100%)";
-                orb.style.boxShadow = "0 0 30px rgba(0, 255, 204, 0.6)";
-                title.innerText = "Система активна";
-                desc.innerText = "Все модули работают стабильно";
-                desc.style.color = "#00ffcc";
-                isActive = true;
+        let peer = null;
+        let conn = null;
+        let currentCall = null;
+        let localStream = null;
+        let myId = "";
+        let targetPeerId = "";
+
+        // Инициализация пользователя
+        function initUser() {
+            const input = document.getElementById('my-id-input').value.trim();
+            if (!input) return alert('Введите корректный ID');
+            myId = input;
+
+            // Создаем P2P узел на бесплатных серверах PeerJS
+            peer = new Peer(myId);
+
+            peer.on('open', (id) => {
+                document.getElementById('my-id-display').innerText = "Мой ID: " + id;
+                document.getElementById('connect-section').classList.remove('hidden');
+                alert('Аккаунт создан! Твой ID зарегистрирован в сети.');
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                alert('Произошла ошибка или этот ID уже занят кем-то другим.');
+            });
+
+            // Слушаем входящие текстовые сообщения
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupChatLogic();
+            });
+
+            // Слушаем входящие звонки
+            peer.on('call', (call) => {
+                currentCall = call;
+                document.getElementById('call-screen').classList.remove('hidden');
+                document.getElementById('call-status').innerText = "Входящий вызов от " + call.peer;
+                document.querySelector('.id-btn-ans').classList.remove('hidden');
+            });
+        }
+
+        // Подключение к другу
+        function connectToPeer() {
+            targetPeerId = document.getElementById('peer-id-input').value.trim();
+            if (!targetPeerId) return alert('Введите ID друга');
+
+            document.getElementById('chat-with-title').innerText = "Чат с: " + targetPeerId;
+            document.getElementById('auth-screen').classList.add('hidden');
+
+            conn = peer.connect(targetPeerId);
+            setupChatLogic();
+        }
+
+        // Настройка логики входящих/исходящих данных в чате
+        function setupChatLogic() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            if (conn) {
+                document.getElementById('chat-with-title').innerText = "Чат с: " + conn.peer;
+                targetPeerId = conn.peer;
             }
+
+            conn.on('data', (data) => {
+                appendMessage(data.text, 'incoming', data.type, data.mediaData);
+            });
+        }
+
+        // Функция отправки текста
+        function sendTextMessage() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (!text || !conn) return;
+
+            const msgData = { type: 'text', text: text };
+            conn.send(msgData);
+            appendMessage(text, 'outgoing', 'text');
+            input.value = '';
+        }
+
+        // Обработка отправки фото/видео из галереи
+        function handleMediaUpload(inputElement) {
+            const file = inputElement.files[0];
+            if (!file || !conn) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                const fileType = file.type.startsWith('video') ? 'video' : 'image';
+                
+                const msgData = {
+                    type: fileType,
+                    text: fileType === 'image' ? '🌌 Фотография' : '📹 Видеозапись',
+                    mediaData: base64Data
+                };
+
+                // Отправляем P2P другу
+                conn.send(msgData);
+                // Показываем у себя на экране
+                appendMessage(msgData.text, 'outgoing', fileType, base64Data);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Отображение сообщений и медиа в чате
+        function appendMessage(text, direction, type = 'text', mediaData = null) {
+            const chatArea = document.getElementById('chat-area');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${direction}`;
+
+            if (type === 'text') {
+                msgDiv.innerText = text;
+            } else if (type === 'image') {
+                msgDiv.innerHTML = `<span style="color:var(--accent-neon); font-size:12px;">${text}</span><img src="${mediaData}" onclick="window.open(this.src)">`;
+            } else if (type === 'video') {
+                msgDiv.innerHTML = `<span style="color:var(--accent-pink); font-size:12px;">${text}</span><video src="${mediaData}" controls playsinline></video>`;
+            }
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'msg-time';
+            const now = new Date();
+            timeDiv.innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            msgDiv.appendChild(timeDiv);
+
+            chatArea.appendChild(msgDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        /* ЛОГИКА ЗВОНКОВ (WebRTC) */
+        async function startCall(isVideo) {
+            if (!targetPeerId) return alert('Сначала выберите чат и подключитесь к другу');
+            document.getElementById('call-screen').classList.remove('hidden');
+            document.getElementById('call-status').innerText = "Вызов отправлен...";
+            document.querySelector('.id-btn-ans').classList.add('hidden');
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+                document.getElementById('local-video').srcObject = localStream;
+                if (!isVideo) document.getElementById('video-wrap').style.opacity = '0.3';
+
+                currentCall = peer.call(targetPeerId, localStream);
+                handleCallStreams();
+            } catch (err) {
+                alert('Не удалось получить доступ к камере/микрофону: ' + err);
+                hangUpCall();
+            }
+        }
+
+        async function answerIncomingCall() {
+            document.querySelector('.id-btn-ans').classList.add('hidden');
+            document.getElementById('call-status').innerText = "Соединение...";
+
+            try {
+                // Пытаемся взять камеру и микрофон для ответа
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                document.getElementById('local-video').srcObject = localStream;
+                
+                currentCall.answer(localStream);
+                handleCallStreams();
+            } catch (err) {
+                // Если камеры нет или отклонено, пробуем только аудио
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    currentCall.answer(localStream);
+                    handleCallStreams();
+                } catch (e) {
+                    alert('Ошибка доступа к аудио/видео.');
+                    hangUpCall();
+                }
+            }
+        }
+
+        function handleCallStreams() {
+            currentCall.on('stream', (remoteStream) => {
+                document.getElementById('call-status').innerText = "Разговор активен";
+                document.getElementById('remote-video').srcObject = remoteStream;
+            });
+
+            currentCall.on('close', () => {
+                hangUpCall();
+            });
+        }
+
+        function hangUpCall() {
+            if (currentCall) currentCall.close();
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('call-screen').classList.add('hidden');
+            document.getElementById('remote-video').srcObject = null;
+            document.getElementById('local-video').srcObject = null;
+            document.getElementById('video-wrap').style.opacity = '1';
+            document.getElementById('call-status').innerText = "...";
         }
     </script>
 </body>
 </html>
-
