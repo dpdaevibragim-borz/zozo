@@ -1,62 +1,31 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZOZO Node Messenger</title>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #0b0f19;
-            --card-bg: #131a2c;
-            --accent-neon: #00ffcc;
-            --accent-pink: #ff007f;
-            --text-main: #ffffff;
-            --text-muted: #6b7c96;
-            --chat-bg: #0e1424;
-        }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: sans-serif; margin: 0; }
-        /* Стили для экрана пароля */
-        #auth-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999; background: #0b0f19; }
-        .auth-card { width: 90%; max-width: 300px; padding: 20px; text-align: center; background: var(--card-bg); border-radius: 12px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: var(--accent-neon); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    </style>
+    <title>ZOZO Messenger</title>
 </head>
 <body>
+    <h1>ZOZO Мессенджер</h1>
+    <div id="messages"></div>
 
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h1>ZOZO</h1>
-            <p id="label">Придумайте или введите пароль</p>
-            <input type="password" id="pass" placeholder="Пароль">
-            <button onclick="handleAuth()">Войти</button>
-        </div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <script>
-        // ЛОГИКА ПАРОЛЯ
-        const authScreen = document.getElementById('auth-screen');
-        if (localStorage.getItem('userPassword')) {
-            document.getElementById('label').innerText = "Введите пароль";
-        }
+        // Твои ключи из консоли
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZE3nkVTy6KXKDuLBZ",
+            authDomain: "zozo-messenger-e03b4.firebaseapp.com",
+            projectId: "zozo-messenger-e03b4",
+            storageBucket: "zozo-messenger-e03b4.appspot.com",
+            messagingSenderId: "568360570286",
+            appId: "1:568360570286:web:10fd8e"
+        };
 
-        function handleAuth() {
-            const pass = document.getElementById('pass').value;
-            if (!pass) return alert("Введите пароль!");
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            const saved = localStorage.getItem('userPassword');
-            if (!saved) {
-                localStorage.setItem('userPassword', pass);
-                authScreen.style.display = 'none';
-            } else if (pass === saved) {
-                authScreen.style.display = 'none';
-            } else {
-                alert("Неверный пароль!");
-            }
-        }
+        console.log("Firebase подключен успешно!");
+        // Теперь здесь можно прописать логику отправки и получения сообщений
     </script>
-
-    </body>
+</body>
 </html>
-
