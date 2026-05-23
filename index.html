@@ -4,14 +4,27 @@
     <title>ZOZO Messenger</title>
 </head>
 <body>
-    <h1>ZOZO Мессенджер</h1>
-    <div id="messages"></div>
+
+    <div id="auth-screen">
+        <h3>ZOZO Messenger</h3>
+        <input type="text" id="username" placeholder="Придумай имя (логин)">
+        <input type="password" id="password" placeholder="Придумай пароль">
+        <br><br>
+        <button onclick="register()">Регистрация</button>
+        <button onclick="login()">Войти</button>
+    </div>
+
+    <div id="chat-screen" style="display:none;">
+        <h1>Чат ZOZO</h1>
+        <div id="messages" style="height:200px; overflow-y:scroll; border:1px solid #ccc;"></div>
+        <input type="text" id="msgInput" placeholder="Сообщение...">
+        <button onclick="sendMessage()">Отправить</button>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Твои ключи из консоли
         const firebaseConfig = {
             apiKey: "AIzaSyAZE3nkVTy6KXKDuLBZ",
             authDomain: "zozo-messenger-e03b4.firebaseapp.com",
@@ -24,8 +37,40 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        console.log("Firebase подключен успешно!");
-        // Теперь здесь можно прописать логику отправки и получения сообщений
+        // --- ФУНКЦИИ ---
+        window.register = async () => {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            await setDoc(doc(db, "users", user), { password: pass });
+            alert("Регистрация успешна! Теперь нажми Войти.");
+        };
+
+        window.login = async () => {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const docSnap = await getDoc(doc(db, "users", user));
+            
+            if (docSnap.exists() && docSnap.data().password === pass) {
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('chat-screen').style.display = 'block';
+            } else {
+                alert("Неверный логин или пароль!");
+            }
+        };
+
+        window.sendMessage = async () => {
+            const text = document.getElementById('msgInput').value;
+            await addDoc(collection(db, "messages"), { text: text, createdAt: new Date() });
+            document.getElementById('msgInput').value = '';
+        };
+
+        // Загрузка сообщений
+        onSnapshot(query(collection(db, "messages"), orderBy("createdAt")), (snap) => {
+            document.getElementById('messages').innerHTML = '';
+            snap.forEach(d => {
+                document.getElementById('messages').innerHTML += `<div>${d.data().text}</div>`;
+            });
+        });
     </script>
 </body>
 </html>
